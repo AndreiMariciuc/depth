@@ -14,12 +14,12 @@ protected:
     int maxDisparity;
     int halfWindowX, halfWindowY;
     int rows, cols;
-    cv::Mat_<img_t> left, right;
+    std::vector<std::vector<ll>> left, right;
 
     virtual int findDisparity(int y, int xl) = 0;
 
 public:
-    DisparityCalculator(cv::Mat_<img_t> &left, cv::Mat_<img_t> &right,
+    DisparityCalculator(std::vector<std::vector<ll>> &left, std::vector<std::vector<ll>> &right,
                         int maxDisparity = 150, int halfWindowX = 5, int halfWindowY = 5);
 
     cv::Mat_<int> computeDisparity(int nbOfThreads = 8);

@@ -6,7 +6,7 @@
 #define DEPTHESTIMATION_UTILS_H
 
 typedef long long ll;
-typedef unsigned short img_t;
+typedef long long img_t;
 
 static double t;
 

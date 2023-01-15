@@ -33,12 +33,12 @@ void computeRows(const Mat_<uchar> &img, Mat_<unsigned short> &rimg, int ystart,
 template<typename T>
 class CensusTransform {
 public:
-    Mat_<T> computeCensusTransform(const Mat_<uchar> &img) {
-        Mat_<T> rez(img.rows, img.cols);
+    std::vector<std::vector<T>> computeCensusTransform(const Mat_<uchar> &img) {
+        std::vector<std::vector<T>> rez(img.rows, std::vector<ll>(img.cols, 0));
 
         for (int i = 0; i < img.rows; i++) {
             for (int j = 0; j < img.cols; j++) {
-                rez(i, j) = computeDistance(i, j, img);
+                rez[i][j] = computeDistance(i, j, img);
             }
         }
 
@@ -46,10 +46,24 @@ public:
     }
 
 private:
-    T computeDistance(int i, int j, const Mat_<T> &img) {
+    T computeDistance(int i, int j, const Mat_<uchar> &img) {
         T r = 0;
         T one;
-        int N = 8;
+        int N = 8 * sizeof(T);
+
+        if (N != 8) {
+            for (int ii = 0; ii < 9; ii++) {
+                for (int jj = 0; jj < 7; jj++) {
+                    int ni = i + ii - 4;
+                    int nj = j + jj - 3;
+                    one = isInside(ni, nj, img.rows, img.cols) && img(i, j) < img(ni, nj) ? 1 : 0;
+                    int idxShift = jj + ii * 9;
+                    r |= one << idxShift;
+                }
+            }
+
+            return r;
+        }
 
         for (int k = 0; k < N; k++) {
             int ni = dy[k] + i;
@@ -62,7 +76,8 @@ private:
     }
 };
 
-Mat_<unsigned short> censusTr(const Mat_<uchar> &img, int nbOfThreads) {
+
+std::vector<std::vector<ll>> censusTr(const Mat_<uchar> &img, int nbOfThreads) {
 //    Mat_<unsigned short> rimg = Mat_<short>(img.rows, img.cols, (short) 0);
 //
 //    int dim = img.rows / nbOfThreads;
@@ -83,7 +98,7 @@ Mat_<unsigned short> censusTr(const Mat_<uchar> &img, int nbOfThreads) {
 //
 //    return rimg;
 
-    CensusTransform<uchar> censusTransform;
+    CensusTransform<ll> censusTransform;
 
     return censusTransform.computeCensusTransform(img);
 }

@@ -6,9 +6,11 @@
 #define DEPTHESTIMATION_CENSUSTRANSFORMATION_H
 
 #include <opencv2/opencv.hpp>
+#include "utils.h"
 
 using namespace cv;
 
-Mat_<unsigned short> censusTr(const Mat_<uchar> &img, int nbOfThreads = 8);
+
+std::vector<std::vector<ll>> censusTr(const Mat_<uchar> &img, int nbOfThreads = 8);
 
 #endif //DEPTHESTIMATION_CENSUSTRANSFORMATION_H

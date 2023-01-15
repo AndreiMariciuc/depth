@@ -10,9 +10,14 @@ using namespace cv;
 const string LEFT_PATH = "../kitti/training/image_2";
 const string RIGHT_PATH = "../kitti/training/image_3";
 
-Mat_<img_t> leftCens, rightCens;
+vector<vector<ll>> leftCens, rightCens;
 
 inline Mat_<uchar> scaleImg(const Mat_<int> &m) {
+    auto maxim = *max_element(m.begin(), m.end());
+    return 255 * m / maxim;
+}
+
+inline Mat_<uchar> scaleImg(const Mat_<float> &m) {
     auto maxim = *max_element(m.begin(), m.end());
     return 255 * m / maxim;
 }
@@ -68,17 +73,30 @@ Mat_<uchar> normalization(const Mat_<float> &img, const Mat_<float> &k) {
     return 128 + img / (2 * max(s_plus, -s_minus));
 }
 
+
+Mat_<float> convertToLg(const Mat_<int> &h) {
+    Mat_<float> result(h.rows, h.cols);
+    for (int i = 0; i < h.rows; i++) {
+        for (int j = 0; j < h.cols; j++) {
+            result(i, j) = log(h(i, j) + 1);
+        }
+    }
+    return result;
+}
+
 int main() {
-    Mat_<uchar> left = imread(LEFT_PATH + "/000095_10.png", IMREAD_GRAYSCALE), right = imread(
-            RIGHT_PATH + "/000095_10.png", IMREAD_GRAYSCALE);
+    Mat_<uchar> left = imread(LEFT_PATH + "/000001_10.png", IMREAD_GRAYSCALE), right = imread(
+            RIGHT_PATH + "/000001_10.png", IMREAD_GRAYSCALE);
 //    Mat_<uchar> left = imread("../sampledata/im00.png", IMREAD_GRAYSCALE), right = imread("../sampledata/im11.png", IMREAD_GRAYSCALE);
 
-    leftCens = censusTr(left);
-    rightCens = censusTr(right);
+    COUNT_TIME(
+            leftCens = censusTr(left);
+            rightCens = censusTr(right);
+    );
 
     COUNT_TIME(
             auto disparityCalculator = DP2DMultiBlocksDisparityCalculator(leftCens, rightCens);
-            Mat_<int> disparity = disparityCalculator.computeDisparity(8);
+            Mat_<int> disparity = disparityCalculator.computeDisparity(16);
     );
 
 //    calcHist()
@@ -147,11 +165,14 @@ int main() {
 //    auto dv = scaleImg(conv_v);
 
     auto h = compute2dHist(conv_u, conv_v);
+    auto hlog = convertToLg(h);
 //
     namedWindow("h", WINDOW_NORMAL);
     namedWindow("dv", WINDOW_NORMAL);
     namedWindow("du", WINDOW_NORMAL);
     imshow("h", Mat_<uchar>(h));
+    namedWindow("hlog", WINDOW_NORMAL);
+    imshow("hlog", scaleImg(hlog));
     imshow("dv", conv_u);
     imshow("du", conv_v);
 

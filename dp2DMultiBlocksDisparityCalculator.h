@@ -12,33 +12,36 @@ private:
     std::vector<std::pair<int, int>> blocks{
             {1,  32},
             {32, 1},
-            {6,  6},
+            {7,  7},
 //            {4,  4},
     };
 
-    std::vector<std::vector<std::vector<ll>>> costsSum;
+    std::vector<std::vector<std::vector<ll>>> costsSumLeft;
+    std::vector<std::vector<std::vector<ll>>> costsSumRight;
 
 public:
-    DP2DMultiBlocksDisparityCalculator(cv::Mat_<img_t> &left, cv::Mat_<img_t> &right,
+    DP2DMultiBlocksDisparityCalculator(std::vector<std::vector<ll>> &left, std::vector<std::vector<ll>> &right,
                                        int maxDisparity = 150, int halfWindowX = 5, int halfWindowY = 5);
 
-    DP2DMultiBlocksDisparityCalculator(cv::Mat_<img_t> &left, cv::Mat_<img_t> &right,
+    DP2DMultiBlocksDisparityCalculator(std::vector<std::vector<ll>> &left, std::vector<std::vector<ll>> &right,
                                        std::vector<std::pair<int, int>> &blocks,
                                        int maxDisparity = 150, int halfWindowX = 5, int halfWindowY = 5);
 
 private:
 
-    int findDisparity(int y, int xl) override;
+    int findDisparity(int y, int x) override;
 
     ll getMultiBlockCost(cv::Point3i p, const std::vector<std::vector<ll>> &sum);
 
-    ll getBlockCost(const cv::Point3i &p, const std::vector<std::vector<ll>> &s, int curHalfWindowX, int curHalfWindowY);
+    ll
+    getBlockCost(const cv::Point3i &p, const std::vector<std::vector<ll>> &s, int curHalfWindowX, int curHalfWindowY);
 
-    std::vector<std::vector<std::vector<ll>>> costAggregation(std::vector<std::vector<std::vector<int>>> costs);
+    void costAggregation(
+            const std::pair<std::vector<std::vector<std::vector<int>>>, std::vector<std::vector<std::vector<int>>>>& costs);
 
     std::vector<std::vector<ll>> partialSum(const std::vector<std::vector<int>> &costs);
 
-    std::vector<std::vector<std::vector<int>>> computeCosts();
+    std::pair<std::vector<std::vector<std::vector<int>>>, std::vector<std::vector<std::vector<int>>>> computeCosts();
 };
 
 #endif //DEPTHESTIMATION_DP2DMULTIBLOCKSDISPARITYCALCULATOR_H

@@ -9,7 +9,8 @@
 using namespace cv;
 using namespace std;
 
-DisparityCalculator::DisparityCalculator(cv::Mat_<img_t> &left, cv::Mat_<img_t> &right, int maxDisparity,
+DisparityCalculator::DisparityCalculator(std::vector<std::vector<ll>> &left, std::vector<std::vector<ll>> &right,
+                                         int maxDisparity,
                                          int halfWindowX,
                                          int halfWindowY)
         : left(left),
@@ -20,8 +21,8 @@ DisparityCalculator::DisparityCalculator(cv::Mat_<img_t> &left, cv::Mat_<img_t> 
     assert(left.cols == right.cols && "Coloanele nu-s la fel!");
     assert(left.rows == right.cols && "Randurile nu-s la fel!");
 
-    this->rows = this->left.rows;
-    this->cols = this->left.cols;
+    this->rows = this->left.size();
+    this->cols = this->left[0].size();
 }
 
 
@@ -29,7 +30,7 @@ void computeDisparityThread(Mat_<int> &disparity,
                             int ystart, int ystop,
                             DisparityCalculator &disp) {
     for (int y = ystart; y < ystop; y++) {
-        for (int xl = disp.maxDisparity; xl < disp.cols; xl++) {
+        for (int xl = 0; xl < disp.cols; xl++) {
             disparity(y, xl) = disp.findDisparity(y, xl);
         }
     }
