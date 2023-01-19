@@ -18,8 +18,6 @@ DisparityCalculator::DisparityCalculator(std::vector<std::vector<ll>> &left, std
           maxDisparity(maxDisparity),
           halfWindowX(halfWindowX),
           halfWindowY(halfWindowY) {
-    assert(left.cols == right.cols && "Coloanele nu-s la fel!");
-    assert(left.rows == right.cols && "Randurile nu-s la fel!");
 
     this->rows = this->left.size();
     this->cols = this->left[0].size();

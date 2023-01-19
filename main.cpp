@@ -1,5 +1,6 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
+#include <fstream>
 #include "utils.h"
 #include "censusTransformation.h"
 #include "dp2DMultiBlocksDisparityCalculator.h"
@@ -28,7 +29,7 @@ Mat_<int> compute2dHist(Mat_<int> du, Mat_<int> dv) {
 
     for (int i = 0; i < du.rows; i++) {
         for (int j = 0; j < dv.cols; j++) {
-            hist(du(i, j), dv(i, j)) = hist(du(i, j), dv(i, j)) + 1;
+            hist(dv(i, j), du(i, j)) = hist(dv(i, j), du(i, j)) + 1;
 //            cout << int(du(i, j)) << " " << int(dv(i, j)) << "=" << int(hist(du(i, j), dv(i, j))) << "\n";
         }
     }
@@ -67,8 +68,6 @@ Mat_<uchar> normalization(const Mat_<float> &img, const Mat_<float> &k) {
         }
     }
 
-    cout << s_plus << " " << s_minus << "\n";
-
 //    return abs(img) / max(s_plus, -s_minus);
     return 128 + img / (2 * max(s_plus, -s_minus));
 }
@@ -84,20 +83,78 @@ Mat_<float> convertToLg(const Mat_<int> &h) {
     return result;
 }
 
+void createVideo() {
+    VideoWriter video("disp_v5.avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 5, Size(1242, 375 + 375 + 375));
+
+    char fileName[20];
+    Mat toWrite;
+    for (int sampleIdx = 0;; sampleIdx++) {
+        sprintf(fileName, "/%06d", sampleIdx);
+
+        Mat left = imread(LEFT_PATH + fileName + "_10.png", IMREAD_GRAYSCALE);
+        if (left.cols == 0) break;
+        Mat right = imread(RIGHT_PATH + fileName + "_10.png", IMREAD_GRAYSCALE);
+
+        leftCens = censusTr(left);
+        rightCens = censusTr(right);
+
+//        auto dispCalc = DP2DMultiBlocksDisparityCalculator(leftCens, rightCens);
+//        Mat_<int> disparity = dispCalc.computeDisparity();
+//        auto disp = scaleImg(disparity);
+//        imshow("disp", disp);
+//        waitKey(0);
+        cvtColor(scaleImg(DP2DMultiBlocksDisparityCalculator(leftCens, rightCens).computeDisparity()), toWrite,
+                 COLOR_GRAY2BGR);
+        Mat toWriteLeft;
+        cvtColor(left, toWriteLeft,
+                 COLOR_GRAY2BGR);
+        Mat heatmap;
+        applyColorMap(toWrite, heatmap, COLORMAP_JET);
+        vector<Mat> matrices1 = {
+                toWriteLeft,
+                toWrite,
+                heatmap
+        };
+        Mat R1;
+        vconcat(matrices1, R1);
+        video << R1;
+
+        left = imread(LEFT_PATH + fileName + "_11.png", IMREAD_GRAYSCALE);
+        right = imread(RIGHT_PATH + fileName + "_11.png", IMREAD_GRAYSCALE);
+
+        leftCens = censusTr(left);
+        rightCens = censusTr(right);
+
+        cvtColor(scaleImg(DP2DMultiBlocksDisparityCalculator(leftCens, rightCens).computeDisparity()), toWrite,
+                 COLOR_GRAY2BGR);
+        applyColorMap(toWrite, heatmap, COLORMAP_JET);
+        cvtColor(left, toWriteLeft,
+                 COLOR_GRAY2BGR);
+        vector<Mat> matrices = {
+                toWriteLeft,
+                toWrite,
+                heatmap
+        };
+        Mat R;
+        vconcat(matrices, R);
+        video << R;
+        cout << sampleIdx << " done" << "\n";
+    }
+}
+
 int main() {
+//    createVideo();
+//    return 0;
+//    *************************************************************
     Mat_<uchar> left = imread(LEFT_PATH + "/000001_10.png", IMREAD_GRAYSCALE), right = imread(
             RIGHT_PATH + "/000001_10.png", IMREAD_GRAYSCALE);
 //    Mat_<uchar> left = imread("../sampledata/im00.png", IMREAD_GRAYSCALE), right = imread("../sampledata/im11.png", IMREAD_GRAYSCALE);
 
-    COUNT_TIME(
-            leftCens = censusTr(left);
-            rightCens = censusTr(right);
-    );
+    leftCens = censusTr(left);
+    rightCens = censusTr(right);
 
-    COUNT_TIME(
-            auto disparityCalculator = DP2DMultiBlocksDisparityCalculator(leftCens, rightCens);
-            Mat_<int> disparity = disparityCalculator.computeDisparity(16);
-    );
+    auto disparityCalculator = DP2DMultiBlocksDisparityCalculator(leftCens, rightCens);
+    Mat_<int> disparity = disparityCalculator.computeDisparity(8);
 
 //    calcHist()
 
@@ -123,7 +180,7 @@ int main() {
     ku(3, 3) = -1;
     ku(4, 3) = -1;
 
-    cout << ku << "\n";
+//    cout << ku << "\n";
 //
     kv(0, 0) = 2;
     kv(0, 1) = 2;
@@ -147,7 +204,7 @@ int main() {
     kv(4, 3) = -2;
     kv(4, 4) = -2;
 
-    cout << kv << "\n";
+//    cout << kv << "\n";
 //
     auto conv = convolution(disparity, ku);
     auto conv_u = normalization(conv, ku);
@@ -164,10 +221,15 @@ int main() {
 //    auto du = scaleImg(conv_u);
 //    auto dv = scaleImg(conv_v);
 
+    ofstream f1("hist.txt"), f2("histlog.txt");
     auto h = compute2dHist(conv_u, conv_v);
     auto hlog = convertToLg(h);
+    f1 << h;
+    f2 << hlog;
+
 //
     namedWindow("h", WINDOW_NORMAL);
+    namedWindow("left", WINDOW_NORMAL);
     namedWindow("dv", WINDOW_NORMAL);
     namedWindow("du", WINDOW_NORMAL);
     imshow("h", Mat_<uchar>(h));
@@ -175,6 +237,7 @@ int main() {
     imshow("hlog", scaleImg(hlog));
     imshow("dv", conv_u);
     imshow("du", conv_v);
+    imshow("left", left);
 
     Mat heatmap;
     applyColorMap(scaleImg(disparity), heatmap, COLORMAP_JET);

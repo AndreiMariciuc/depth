@@ -10,17 +10,20 @@ using namespace cv;
 
 DP2DMultiBlocksDisparityCalculator::DP2DMultiBlocksDisparityCalculator(std::vector<std::vector<ll>> &left,
                                                                        std::vector<std::vector<ll>> &right,
+                                                                       bool leftRightCheck,
                                                                        int maxDisparity, int halfWindowX,
                                                                        int halfWindowY)
         : DisparityCalculator(left, right,
                               maxDisparity,
                               halfWindowX,
                               halfWindowY) {
+    this->leftRightCheck = leftRightCheck;
     this->costAggregation(computeCosts());
 }
 
 DP2DMultiBlocksDisparityCalculator::DP2DMultiBlocksDisparityCalculator(std::vector<std::vector<ll>> &left,
                                                                        std::vector<std::vector<ll>> &right,
+                                                                       bool leftRightCheck,
                                                                        std::vector<std::pair<int, int>> &blocks,
                                                                        int maxDisparity, int halfWindowX,
                                                                        int halfWindowY) : DisparityCalculator(left,
@@ -29,6 +32,7 @@ DP2DMultiBlocksDisparityCalculator::DP2DMultiBlocksDisparityCalculator(std::vect
                                                                                                               halfWindowX,
                                                                                                               halfWindowY) {
     this->blocks = blocks;
+    this->leftRightCheck = leftRightCheck;
     this->costAggregation(computeCosts());
 }
 
@@ -57,14 +61,16 @@ void
 DP2DMultiBlocksDisparityCalculator::costAggregation(
         const pair<vector<vector<vector<int>>>, vector<vector<vector<int>>>> &costs) {
     this->costsSumLeft.resize(maxDisparity + 1);
-    this->costsSumRight.resize(maxDisparity + 1);
+    if (leftRightCheck)
+        this->costsSumRight.resize(maxDisparity + 1);
 
     auto costsLeft = costs.first;
     auto costsRight = costs.second;
 
     for (int d = 0; d <= maxDisparity; d++) {
         this->costsSumLeft[d] = partialSum(costsLeft[d]);
-        this->costsSumRight[d] = partialSum(costsRight[d]);
+        if (leftRightCheck)
+            this->costsSumRight[d] = partialSum(costsRight[d]);
     }
 }
 
@@ -72,6 +78,7 @@ pair<vector<vector<vector<int>>>, vector<vector<vector<int>>>>
 DP2DMultiBlocksDisparityCalculator::computeCosts() {
     vector<vector<vector<int>>> costsLeft(maxDisparity + 1,
                                           vector<vector<int >>(rows, vector<int>(cols, 0)));
+
     vector<vector<vector<int>>> costsRight(maxDisparity + 1,
                                            vector<vector<int >>(rows, vector<int>(cols, 0)));
 
@@ -86,7 +93,7 @@ DP2DMultiBlocksDisparityCalculator::computeCosts() {
                     costsLeft[d][y][x] = 63 - (h1 + h2);
                 }
 
-                if (x <= cols - maxDisparity) {
+                if (leftRightCheck && x <= cols - maxDisparity) {
                     ll v = left[y][x + d] ^ right[y][x];
                     int h1 = __builtin_popcount(v);
                     int h2 = __builtin_popcount(v >> 32);
@@ -126,7 +133,9 @@ ll DP2DMultiBlocksDisparityCalculator::getMultiBlockCost(Point3i p, const vector
 
 int DP2DMultiBlocksDisparityCalculator::findDisparity(int y, int x) {
     ll bestLeftScore = getMultiBlockCost(Point3i(x, y, 0), costsSumLeft[0]);
-    ll bestRightScore = getMultiBlockCost(Point3i(x, y, 0), costsSumRight[0]);
+    ll bestRightScore;
+    if (leftRightCheck)
+        bestRightScore = getMultiBlockCost(Point3i(x, y, 0), costsSumRight[0]);
     int bestDisparityLeft = 0;
     int bestDisparityRight = 0;
 
@@ -138,20 +147,26 @@ int DP2DMultiBlocksDisparityCalculator::findDisparity(int y, int x) {
             bestDisparityLeft = d;
         }
 
-        score = getMultiBlockCost(Point3i(x, y, d), costsSumRight[d]);
-        if (score > bestRightScore) {
-            bestRightScore = score;
-            bestDisparityRight = d;
+        if (leftRightCheck) {
+            score = getMultiBlockCost(Point3i(x, y, d), costsSumRight[d]);
+            if (score > bestRightScore) {
+                bestRightScore = score;
+                bestDisparityRight = d;
+            }
         }
 
     }
 
 //    return bestDisparityLeft == bestDisparityRight ? bestDisparityLeft : 0;
 //    return bestDisparityRight;
-    if (x < maxDisparity) return bestDisparityRight;
-    if (x > cols - maxDisparity) return bestDisparityLeft;
+    if (leftRightCheck) {
+        if (x < maxDisparity) return bestDisparityRight;
+        if (x > cols - maxDisparity) return bestDisparityLeft;
 
-    return abs(bestDisparityRight - bestDisparityLeft) < 5 ? (bestDisparityRight + bestDisparityLeft) / 2 : 0;
+        return abs(bestDisparityRight - bestDisparityLeft) < 10 ? (bestDisparityRight + bestDisparityLeft) / 2 : 0;
+    }
+
+    return bestDisparityLeft;
 }
 
 

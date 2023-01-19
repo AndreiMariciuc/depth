@@ -9,21 +9,21 @@
 
 class DP2DMultiBlocksDisparityCalculator : public DisparityCalculator {
 private:
+    bool leftRightCheck = false;
     std::vector<std::pair<int, int>> blocks{
             {1,  32},
             {32, 1},
-            {7,  7},
-//            {4,  4},
+            {5, 5},
     };
 
     std::vector<std::vector<std::vector<ll>>> costsSumLeft;
     std::vector<std::vector<std::vector<ll>>> costsSumRight;
 
 public:
-    DP2DMultiBlocksDisparityCalculator(std::vector<std::vector<ll>> &left, std::vector<std::vector<ll>> &right,
+    DP2DMultiBlocksDisparityCalculator(std::vector<std::vector<ll>> &left, std::vector<std::vector<ll>> &right, bool leftRightCheck = true,
                                        int maxDisparity = 150, int halfWindowX = 5, int halfWindowY = 5);
 
-    DP2DMultiBlocksDisparityCalculator(std::vector<std::vector<ll>> &left, std::vector<std::vector<ll>> &right,
+    DP2DMultiBlocksDisparityCalculator(std::vector<std::vector<ll>> &left, std::vector<std::vector<ll>> &right,bool leftRightCheck,
                                        std::vector<std::pair<int, int>> &blocks,
                                        int maxDisparity = 150, int halfWindowX = 5, int halfWindowY = 5);
 
