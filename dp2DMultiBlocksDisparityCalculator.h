@@ -13,7 +13,7 @@ private:
     std::vector<std::pair<int, int>> blocks{
             {1,  32},
             {32, 1},
-            {5, 5},
+            {5, 5}
     };
 
     std::vector<std::vector<std::vector<ll>>> costsSumLeft;

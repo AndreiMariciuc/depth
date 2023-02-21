@@ -5,6 +5,9 @@
 #ifndef DEPTHESTIMATION_UTILS_H
 #define DEPTHESTIMATION_UTILS_H
 
+//#define SHEAR_SCALE
+//#define CREATE_VIDEO
+
 typedef long long ll;
 typedef long long img_t;
 

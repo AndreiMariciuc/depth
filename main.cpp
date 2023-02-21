@@ -142,13 +142,39 @@ void createVideo() {
     }
 }
 
+
+Mat_<uchar> shearAndScale(const Mat_<uchar> &right, float g = 2, float s = 1) {
+    Mat_<uchar> ssRight(right.rows, right.cols, (uchar) 0);
+
+    for (int i = 0; i < right.rows; i++) {
+        for (int j = 0; j < right.cols; j++) {
+            int jj = s * (j + g * i);
+            if (jj < right.cols && jj >= 0)
+                ssRight(i, jj) = right(i, j);
+        }
+    }
+
+    return ssRight;
+}
+
 int main() {
-//    createVideo();
-//    return 0;
-//    *************************************************************
+#ifdef CREATE_VIDEO
+    createVideo();
+    return 0;
+#endif
+
     Mat_<uchar> left = imread(LEFT_PATH + "/000001_10.png", IMREAD_GRAYSCALE), right = imread(
             RIGHT_PATH + "/000001_10.png", IMREAD_GRAYSCALE);
 //    Mat_<uchar> left = imread("../sampledata/im00.png", IMREAD_GRAYSCALE), right = imread("../sampledata/im11.png", IMREAD_GRAYSCALE);
+
+
+#ifdef SHEAR_SCALE
+    auto ssRight = shearAndScale(right, 2, 1.5);
+    imshow("right", right);
+    imshow("ssRight", ssRight);
+    waitKey(0);
+    return 0;
+#endif
 
     leftCens = censusTr(left);
     rightCens = censusTr(right);
@@ -207,9 +233,12 @@ int main() {
 //    cout << kv << "\n";
 //
     auto conv = convolution(disparity, ku);
+
     auto conv_u = normalization(conv, ku);
     conv = convolution(disparity, kv);
     auto conv_v = normalization(conv, kv);
+
+    cout << conv_u;
 
 //    auto m = *min_element(conv_u.begin<float>(), conv_u.end<float>());
 //    cout << m << "\n";
