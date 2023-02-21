@@ -10,3 +10,6 @@ The output will be a depth map hat shows the estimated distance.
 
 ## Results
 
+![img.png](sampledata/img.png)
+
+![img_1.png](sampledata/img_1.png)
