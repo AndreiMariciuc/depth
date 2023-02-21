@@ -6,7 +6,7 @@ This project is a C++ program that uses stereo vision to estimate the distance. 
 
 The program requires two input images (left and right views).
 
-The output will be a depth map hat shows the estimated distance.
+The output will be a depth map that shows the estimated distance.
 
 ## Results
 
